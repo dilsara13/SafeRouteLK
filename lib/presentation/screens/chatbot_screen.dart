@@ -1,8 +1,9 @@
 // lib/presentation/screens/chatbot_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:saferoute_lk/constants/app_colors.dart';
+import 'package:saferoute_lk/core/constants/app_colors.dart';
 import 'package:saferoute_lk/presentation/providers/ui_provider.dart';
+import 'package:saferoute_lk/presentation/screens/alert_confirmation_screen.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -19,6 +20,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     'I feel unsafe',
     'Nearest safe spot',
   ];
+
+  bool _isWaitingForEmergencyResponse = false;
+  bool _isPlayingAudio = false;
 
   @override
   Widget build(BuildContext context) {
@@ -212,25 +216,59 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final provider = Provider.of<UIProvider>(context, listen: false);
     String response = '';
 
-    if (userMessage.toLowerCase().contains('where am i')) {
+    String lowerMessage = userMessage.toLowerCase();
+
+    if (_isWaitingForEmergencyResponse) {
+      if (lowerMessage.contains('no') || lowerMessage.contains('help') || lowerMessage.contains('not ok')) {
+        _isWaitingForEmergencyResponse = false;
+        response = "🚨 Activating Emergency Alert System immediately!";
+        provider.addChatMessage(response, false);
+        
+        // Auto navigate to Alert screen after a tiny delay
+        Future.delayed(const Duration(seconds: 1), () {
+          if (!mounted) return;
+          final selectedContacts = provider.emergencyContacts
+              .where((c) => c['selected'] == true)
+              .toList();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AlertConfirmationScreen(
+                contacts: selectedContacts.isNotEmpty ? selectedContacts : provider.emergencyContacts,
+                message: 'Auto-triggered emergency alert from chatbot',
+              ),
+            ),
+          );
+        });
+        return;
+      } else if (lowerMessage.contains('yes') || lowerMessage.contains('fine') || lowerMessage.contains('ok')) {
+        _isWaitingForEmergencyResponse = false;
+        response = "Okay. I will act normally. Let me know if you need anything.";
+      } else {
+        // Did not give a clear answer, ask again
+        response = "I did not understand. Are you OK? Please say YES or NO.";
+      }
+    } else if (lowerMessage.contains('where am i')) {
       response = "📍 You're at: Galle Road, Colombo 03\n\n"
-          "⚠️ Safety Information:\n"
+          "⚠️ Safety Information & Crime Data:\n"
           "• Safety Score: 72/100\n"
-          "• Crime Level: Moderate\n"
+          "• Overall Crime Level: Moderate\n"
+          "• Recent Incidents: 2 reports of pickpocketing near Marine Drive in the last 48 hrs.\n"
           "• Street Lighting: Good\n\n"
           "🏪 Nearby Safe Spots:\n"
           "• 24hr Supermarket (50m)\n"
           "• Police Booth (200m)";
-    } else if (userMessage.toLowerCase().contains('safe')) {
+    } else if (lowerMessage.contains('safe') && !lowerMessage.contains('unsafe')) {
       response = "Based on recent data:\n\n"
           "✅ This area has:\n"
           "• Good street lighting\n"
           "• Regular police patrols\n\n"
           "⚠️ Caution advised:\n"
-          "• Avoid dark alleys after 10 PM";
-    } else if (userMessage.toLowerCase().contains('unsafe')) {
+          "• Avoid dark alleys after 10 PM. Watch out for petty theft on side streets.";
+    } else if (lowerMessage.contains('unsafe') || lowerMessage.contains('help')) {
+      _isWaitingForEmergencyResponse = true;
       response = "🚨 I detect you might be in danger.\n\n"
-          "Are you OK? Please respond within 30 seconds.";
+          "Are you OK? Please respond with YES or NO within 30 seconds.";
     } else {
       response = "I understand you asked: \"$userMessage\"\n\n"
           "As your safety assistant, I can help you with:\n"
@@ -240,10 +278,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
 
     provider.addChatMessage(response, false);
+
+    if (_isPlayingAudio) {
+      if (mounted) {
+        setState(() { _isPlayingAudio = false; });
+      }
+      provider.addChatMessage("🔊 Playing audio response...", false);
+    }
   }
 
   void _simulateVoiceInput() {
-    // Simulate voice input for demo
-    _sendMessage('Voice message: I need help finding a safe route');
+    setState(() { _isPlayingAudio = true; });
+    _sendMessage('Voice message: Where am I?');
   }
 }

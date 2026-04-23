@@ -1,8 +1,8 @@
-// lib/presentation/screens/alert_confirmation_screen.dart
 import 'package:flutter/material.dart';
-import 'package:saferoute_lk/constants/app_colors.dart';
+import 'package:saferoute_lk/core/constants/app_colors.dart'; // Ensure core import if needed
+import 'package:saferoute_lk/presentation/screens/fake_call_screen.dart';
 
-class AlertConfirmationScreen extends StatelessWidget {
+class AlertConfirmationScreen extends StatefulWidget {
   final List<Map<String, dynamic>> contacts;
   final String message;
 
@@ -11,6 +11,30 @@ class AlertConfirmationScreen extends StatelessWidget {
     required this.contacts,
     required this.message,
   });
+
+  @override
+  State<AlertConfirmationScreen> createState() => _AlertConfirmationScreenState();
+}
+
+class _AlertConfirmationScreenState extends State<AlertConfirmationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const FakeCallScreen(
+              autoStart: true,
+              autoCaller: 'dad',
+              autoScenario: 'on_my_way',
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +66,7 @@ class AlertConfirmationScreen extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
-                  ...contacts.map((contact) {
+                  ...widget.contacts.map((contact) {
                     return ListTile(
                       leading:
                           const Icon(Icons.person, color: AppColors.primary),

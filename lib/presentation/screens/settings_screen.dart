@@ -1,7 +1,5 @@
 // lib/presentation/screens/settings_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:saferoute_lk/presentation/providers/ui_provider.dart';
 import 'package:saferoute_lk/core/constants/app_colors.dart';
 import 'package:saferoute_lk/core/constants/app_styles.dart';
 

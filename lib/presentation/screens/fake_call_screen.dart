@@ -4,18 +4,40 @@ import 'package:saferoute_lk/core/constants/app_colors.dart';
 import 'package:saferoute_lk/core/constants/app_styles.dart';
 
 class FakeCallScreen extends StatefulWidget {
-  const FakeCallScreen({super.key});
+  final bool autoStart;
+  final String? autoCaller;
+  final String? autoScenario;
+
+  const FakeCallScreen({
+    super.key,
+    this.autoStart = false,
+    this.autoCaller,
+    this.autoScenario,
+  });
 
   @override
   State<FakeCallScreen> createState() => _FakeCallScreenState();
 }
 
 class _FakeCallScreenState extends State<FakeCallScreen> {
-  String _selectedCaller = 'dad';
-  String _selectedScenario = 'on_my_way';
+  late String _selectedCaller;
+  late String _selectedScenario;
   int _callDelay = 0;
   bool _isCallActive = false;
   int _callTimer = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCaller = widget.autoCaller ?? 'dad';
+    _selectedScenario = widget.autoScenario ?? 'on_my_way';
+
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startFakeCall();
+      });
+    }
+  }
 
   final Map<String, Map<String, dynamic>> _callers = {
     'dad': {

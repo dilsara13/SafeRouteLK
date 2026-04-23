@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:saferoute_lk/presentation/providers/ui_provider.dart';
 import 'package:saferoute_lk/core/constants/app_colors.dart';
 import 'package:saferoute_lk/presentation/screens/alert_confirmation_screen.dart';
 
@@ -21,7 +20,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<UIProvider>(context);
+    final provider = Provider.of<EmergencyProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -60,10 +59,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             const Text('Alert Recipients',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
-            ...provider.emergencyContacts.asMap().entries.map((entry) {
+            ...provider.contacts.asMap().entries.map((entry) {
               final contact = entry.value;
               return _buildContactItem(contact, entry.key, provider);
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
 
@@ -149,7 +148,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 
   Widget _buildContactItem(
-      Map<String, dynamic> contact, int index, UIProvider provider) {
+      Map<String, dynamic> contact, int index, EmergencyProvider provider) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -223,10 +222,8 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     );
   }
 
-  void _sendEmergencyAlert(BuildContext context, UIProvider provider) {
-    final selectedContacts = provider.emergencyContacts
-        .where((contact) => contact['selected'] == true)
-        .toList();
+  void _sendEmergencyAlert(BuildContext context, EmergencyProvider provider) {
+    final selectedContacts = provider.selectedContacts;
 
     if (selectedContacts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,5 +241,23 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         ),
       ),
     );
+  }
+}
+
+class EmergencyProvider {
+  final List<Map<String, dynamic>> _contacts = [
+    {'name': 'Contact 1', 'phone': '0712345678', 'selected': false},
+    {'name': 'Contact 2', 'phone': '0787654321', 'selected': false},
+  ];
+
+  List<Map<String, dynamic>> get contacts => _contacts;
+
+  List<Map<String, dynamic>> get selectedContacts =>
+      _contacts.where((contact) => contact['selected'] == true).toList();
+
+  void toggleContactSelection(int index) {
+    if (index >= 0 && index < _contacts.length) {
+      _contacts[index]['selected'] = !_contacts[index]['selected'];
+    }
   }
 }
